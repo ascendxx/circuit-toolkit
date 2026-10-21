@@ -1,80 +1,86 @@
-"""主窗口：左侧导航 + 右侧堆叠页面。"""
-from __future__ import annotations
-
+"""主窗口：左侧导航 + 右侧内容区。"""
 from PyQt6.QtWidgets import (
-    QHBoxLayout,
-    QLabel,
-    QListWidget,
-    QListWidgetItem,
-    QStackedWidget,
-    QVBoxLayout,
-    QWidget,
+    QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
+    QStackedWidget, QLabel, QFrame,
 )
+from PyQt6.QtCore import Qt
+from .widgets.home import HomePage
+from .widgets.convert import ConvertPage
+from .widgets.resources import ResourcesPage
+from .widgets.pinouts import PinoutsPage
+from .widgets.formulas import FormulasPage
+from .widgets.favorites import FavoritesPage
 
-from .calculators.cable import CableAmpacityWidget
-from .calculators.divider import DividerWidget
-from .calculators.ohm_law import OhmLawWidget
-from .calculators.resistor import ResistorWidget
-from .calculators.thevenin import TheveninWidget
-from .calculators.three_phase import ThreePhaseWidget
-from .calculators.units import UnitsWidget
+
+NAV = [
+    ("主页", "home"),
+    ("转换", "convert"),
+    ("资源", "resources"),
+    ("引脚定义", "pinouts"),
+    ("公式集", "formulas"),
+    ("收藏", "favorites"),
+]
 
 
-class MainWindow(QWidget):
-    def __init__(self) -> None:
+class MainWindow(QMainWindow):
+    def __init__(self):
         super().__init__()
-        self.setWindowTitle("电路通 · Circuit Toolkit")
+        self.setWindowTitle("电路计算工具箱 Circuit Toolkit")
+        self.resize(1200, 780)
 
-        root = QHBoxLayout(self)
-        root.setContentsMargins(0, 0, 0, 0)
-        root.setSpacing(0)
+        root = QWidget()
+        h = QHBoxLayout(root)
+        h.setContentsMargins(0, 0, 0, 0)
+        h.setSpacing(0)
 
-        # 侧边栏
-        sidebar = QWidget()
-        sidebar.setObjectName("Sidebar")
-        side_layout = QVBoxLayout(sidebar)
-        side_layout.setContentsMargins(0, 0, 0, 12)
-        side_layout.setSpacing(0)
+        # 侧栏
+        side = QFrame()
+        side.setFixedWidth(180)
+        side.setStyleSheet("background:#f5f5f7;border-right:1px solid #e5e5ea;")
+        sv = QVBoxLayout(side)
+        sv.setContentsMargins(12, 20, 12, 12)
+        sv.setSpacing(4)
 
-        title = QLabel("电路通")
-        title.setObjectName("SidebarTitle")
-        sub = QLabel("Circuit Toolkit · 离线计算")
-        sub.setObjectName("SidebarSubtitle")
+        logo = QLabel("⚡ Circuit Toolkit")
+        logo.setStyleSheet("font-size:15px;font-weight:600;color:#1d1d1f;padding:8px;")
+        sv.addWidget(logo)
+        sv.addSpacing(12)
 
-        self.nav = QListWidget()
-        self.pages = QStackedWidget()
+        self.buttons = {}
+        self.stack = QStackedWidget()
+        pages = {
+            "home": HomePage(self._nav),
+            "convert": ConvertPage(),
+            "resources": ResourcesPage(),
+            "pinouts": PinoutsPage(),
+            "formulas": FormulasPage(),
+            "favorites": FavoritesPage(),
+        }
+        for key, page in pages.items():
+            self.stack.addWidget(page)
 
-        modules = [
-            ("⚡  欧姆定律与功率", OhmLawWidget),
-            ("🔌  电阻串并联", ResistorWidget),
-            ("🎚️  分压与分流", DividerWidget),
-            ("🔄  戴维南等效", TheveninWidget),
-            ("🔺  三相电路", ThreePhaseWidget),
-            ("📏  单位换算", UnitsWidget),
-            ("🧵  电缆载流量", CableAmpacityWidget),
-        ]
-        for label, cls in modules:
-            item = QListWidgetItem(label)
-            self.nav.addItem(item)
-            self.pages.addWidget(cls())
+        for label, key in NAV:
+            b = QPushButton(label)
+            b.setCheckable(True)
+            b.setCursor(Qt.CursorShape.PointingHandCursor)
+            b.setStyleSheet("""
+                QPushButton { text-align:left;padding:8px 12px;border:none;border-radius:8px;
+                             background:transparent;color:#1d1d1f;font-size:13px;}
+                QPushButton:hover { background:#e8e8ed; }
+                QPushButton:checked { background:#fff;color:#0071e3;font-weight:600; }
+            """)
+            b.clicked.connect(lambda _, k=key: self._nav(k))
+            self.buttons[key] = b
+            sv.addWidget(b)
+        sv.addStretch()
 
-        self.nav.currentRowChanged.connect(self.pages.setCurrentIndex)
-        self.nav.setCurrentRow(0)
+        h.addWidget(side)
+        h.addWidget(self.stack, 1)
+        self.setCentralWidget(root)
+        self._nav("home")
 
-        side_layout.addWidget(title)
-        side_layout.addWidget(sub)
-        side_layout.addWidget(self.nav, stretch=1)
-
-        # 内容卡片
-        content = QWidget()
-        content_layout = QVBoxLayout(content)
-        content_layout.setContentsMargins(20, 20, 20, 20)
-        card = QWidget()
-        card.setObjectName("ContentCard")
-        card_layout = QVBoxLayout(card)
-        card_layout.setContentsMargins(0, 0, 0, 0)
-        card_layout.addWidget(self.pages)
-        content_layout.addWidget(card)
-
-        root.addWidget(sidebar)
-        root.addWidget(content, stretch=1)
+    def _nav(self, key):
+        idx = [k for _, k in NAV].index(key)
+        self.stack.setCurrentIndex(idx)
+        for k, b in self.buttons.items():
+            b.setChecked(k == key)
