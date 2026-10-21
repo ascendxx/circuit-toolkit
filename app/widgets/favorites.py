@@ -1,7 +1,7 @@
-"""收藏页：本地持久化收藏的公式。"""
+"""收藏页：本地持久化。"""
 import json
 from pathlib import Path
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QListWidget, QListWidgetItem
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QListWidget
 
 FAV_FILE = Path.home() / ".circuit_toolkit_favs.json"
 
@@ -13,20 +13,18 @@ def load_favs():
         return []
 
 
-def save_favs(items):
-    FAV_FILE.write_text(json.dumps(items, ensure_ascii=False), encoding="utf-8")
-
-
 class FavoritesPage(QWidget):
     def __init__(self):
         super().__init__()
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(24, 24, 24, 24)
-        lay.addWidget(QLabel("<b>我的收藏</b>"))
+        lay.setContentsMargins(20, 20, 20, 20)
+        title = QLabel("我的收藏")
+        title.setObjectName("h2")
+        lay.addWidget(title)
         self.list = QListWidget()
         items = load_favs()
         if not items:
-            self.list.addItem("（暂无收藏，后续版本支持从公式集收藏）")
+            self.list.addItem("（暂无收藏）")
         else:
             for it in items:
                 self.list.addItem(it)

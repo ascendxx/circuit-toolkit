@@ -1,4 +1,4 @@
-"""主窗口：左侧导航 + 右侧内容区。"""
+"""主窗口：侧栏导航 + 内容区。"""
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QHBoxLayout, QVBoxLayout, QPushButton,
     QStackedWidget, QLabel, QFrame,
@@ -13,38 +13,43 @@ from .widgets.favorites import FavoritesPage
 
 
 NAV = [
-    ("主页", "home"),
-    ("转换", "convert"),
-    ("资源", "resources"),
-    ("引脚定义", "pinouts"),
-    ("公式集", "formulas"),
-    ("收藏", "favorites"),
+    ("🏠", "主页", "home"),
+    ("🔄", "转换", "convert"),
+    ("📚", "资源", "resources"),
+    ("🔌", "引脚定义", "pinouts"),
+    ("📐", "公式集", "formulas"),
+    ("⭐", "收藏", "favorites"),
 ]
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("电路计算工具箱 Circuit Toolkit")
-        self.resize(1200, 780)
+        self.setWindowTitle("电路计算工具箱 · Circuit Toolkit")
+        self.resize(1280, 800)
+        self.setMinimumSize(960, 640)
 
         root = QWidget()
+        root.setObjectName("central")
         h = QHBoxLayout(root)
         h.setContentsMargins(0, 0, 0, 0)
         h.setSpacing(0)
 
         # 侧栏
         side = QFrame()
-        side.setFixedWidth(180)
-        side.setStyleSheet("background:#f5f5f7;border-right:1px solid #e5e5ea;")
+        side.setObjectName("sidebar")
+        side.setFixedWidth(200)
         sv = QVBoxLayout(side)
-        sv.setContentsMargins(12, 20, 12, 12)
-        sv.setSpacing(4)
+        sv.setContentsMargins(12, 20, 12, 16)
+        sv.setSpacing(2)
 
         logo = QLabel("⚡ Circuit Toolkit")
-        logo.setStyleSheet("font-size:15px;font-weight:600;color:#1d1d1f;padding:8px;")
+        logo.setObjectName("logo")
+        sub = QLabel("电气计算综合软件")
+        sub.setObjectName("subtitle")
         sv.addWidget(logo)
-        sv.addSpacing(12)
+        sv.addWidget(sub)
+        sv.addSpacing(8)
 
         self.buttons = {}
         self.stack = QStackedWidget()
@@ -59,20 +64,19 @@ class MainWindow(QMainWindow):
         for key, page in pages.items():
             self.stack.addWidget(page)
 
-        for label, key in NAV:
-            b = QPushButton(label)
+        for icon, label, key in NAV:
+            b = QPushButton(f"  {icon}  {label}")
+            b.setObjectName("navBtn")
             b.setCheckable(True)
             b.setCursor(Qt.CursorShape.PointingHandCursor)
-            b.setStyleSheet("""
-                QPushButton { text-align:left;padding:8px 12px;border:none;border-radius:8px;
-                             background:transparent;color:#1d1d1f;font-size:13px;}
-                QPushButton:hover { background:#e8e8ed; }
-                QPushButton:checked { background:#fff;color:#0071e3;font-weight:600; }
-            """)
             b.clicked.connect(lambda _, k=key: self._nav(k))
             self.buttons[key] = b
             sv.addWidget(b)
         sv.addStretch()
+        ver = QLabel("v1.0 · 离线版")
+        ver.setObjectName("subtitle")
+        ver.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        sv.addWidget(ver)
 
         h.addWidget(side)
         h.addWidget(self.stack, 1)
@@ -80,7 +84,7 @@ class MainWindow(QMainWindow):
         self._nav("home")
 
     def _nav(self, key):
-        idx = [k for _, k in NAV].index(key)
+        idx = [k for _, _, k in NAV].index(key)
         self.stack.setCurrentIndex(idx)
         for k, b in self.buttons.items():
             b.setChecked(k == key)
