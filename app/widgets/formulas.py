@@ -107,6 +107,7 @@ class FormulasPage(QWidget):
 
         self._current = None
         self._all_rows = []
+        self._input_edits = []
         self._load_table()
 
     def _current_category(self):
@@ -146,6 +147,7 @@ class FormulasPage(QWidget):
     def _clear_form(self):
         while self.calc_form.rowCount() > 0:
             self.calc_form.removeRow(0)
+        self._input_edits = []
 
     def _selected_row_data(self):
         rows = self.table.selectedItems()
@@ -170,6 +172,7 @@ class FormulasPage(QWidget):
         self.fav_btn.setEnabled(True)
         self._update_fav_btn()
         self._clear_form()
+        self._input_edits = []
         for name, unit, default in f["inputs"]:
             le = QLineEdit(str(default))
             le.setMinimumWidth(140)
@@ -183,15 +186,11 @@ class FormulasPage(QWidget):
             row.addWidget(le, 1)
             row.addWidget(unit_lab)
             self.calc_form.addRow("", row)
+            self._input_edits.append(le)
         self.calc_result.setText("填好参数，点「计算」或按回车")
-        if f["inputs"]:
-            first = self.calc_form.itemAt(0, QFormLayout.ItemRole.FieldRole)
-            if first:
-                w = first.widget()
-                if w:
-                    le = w.findChildren(QLineEdit)
-                    if le:
-                        le[0].setFocus()
+        if self._input_edits:
+            self._input_edits[0].setFocus()
+            self._input_edits[0].selectAll()
 
     def _compute(self):
         f = self._current
@@ -201,18 +200,23 @@ class FormulasPage(QWidget):
         env = dict(_SAFE)
         try:
             for i, (name, _, _) in enumerate(f["inputs"]):
-                item = self.calc_form.itemAt(i, QFormLayout.ItemRole.FieldRole)
-                if item:
-                    w = item.widget()
-                    if isinstance(w, QLineEdit):
-                        env[name] = float(w.text())
-                    else:
-                        le = w.findChildren(QLineEdit)[0]
-                        env[name] = float(le.text())
+                txt = self._input_edits[i].text().strip()
+                if not txt:
+                    raise ValueError(f"参数 {name} 为空")
+                try:
+                    env[name] = float(txt)
+                except ValueError:
+                    raise ValueError(f"参数 {name} 不是有效数字：{txt}")
             val = eval(f["compute"], {"__builtins__": {}}, env)
+            if math.isnan(val) or math.isinf(val):
+                raise ValueError("结果异常（除零或超出范围）")
             self.calc_result.setText(f"{f['output']} = {val:.6g}")
-        except Exception as e:
+        except ValueError as e:
             self.calc_result.setText(f"⚠️ {e}")
+        except ZeroDivisionError:
+            self.calc_result.setText("⚠️ 分母不能为零")
+        except Exception as e:
+            self.calc_result.setText(f"⚠️ 计算错误：{type(e).__name__}")
 
     def _toggle_fav(self):
         if not self._current:
