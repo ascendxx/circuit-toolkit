@@ -59,7 +59,7 @@ class HomePage(QWidget):
             ("⭐ 收藏", "常用公式与计算入口", "favorites"),
         ]
         for i, (name, desc, key) in enumerate(items):
-            grid.addWidget(self._entry_card(name, desc, key), i // 2, i % 2)
+            grid.addWidget(self._entry_card(name, desc, key), i // 3, i % 3)
         lay.addLayout(grid)
         lay.addStretch()
 

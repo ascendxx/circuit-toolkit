@@ -3,7 +3,10 @@ from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QTabWidget, QTableWidget, QTableWidgetItem,
     QHeaderView, QLabel,
 )
-from ..data import RESISTOR_COLOR, WIRING_COLOR, AWG, TEMP_SENSORS, COPPER_RESISTIVITY
+from ..data import (
+    RESISTOR_COLOR, WIRING_COLOR, AWG, TEMP_SENSORS, COPPER_RESISTIVITY,
+    WIRE_AMPACITY, MCB_SELECTION, GROUNDING_REQ,
+)
 
 
 class ResourcesPage(QWidget):
@@ -18,6 +21,9 @@ class ResourcesPage(QWidget):
         tabs.addTab(self._resistor_tab(), "色环电阻")
         tabs.addTab(self._wiring_tab(), "电线颜色")
         tabs.addTab(self._awg_tab(), "AWG 线规")
+        tabs.addTab(self._wire_tab(), "导线载流量")
+        tabs.addTab(self._mcb_tab(), "空开选型")
+        tabs.addTab(self._ground_tab(), "接地电阻")
         tabs.addTab(self._sensor_tab(), "温度传感器")
         lay.addWidget(tabs)
 
@@ -61,4 +67,32 @@ class ResourcesPage(QWidget):
         l = QLabel(f"铜电阻率：20℃={COPPER_RESISTIVITY['20℃']} Ω·mm²/m，75℃={COPPER_RESISTIVITY['75℃']}")
         l.setObjectName("muted")
         v.addWidget(l)
+        return w
+
+    def _wire_tab(self):
+        w = QWidget(); v = QVBoxLayout(w)
+        v.addWidget(self._table(
+            ["截面积 mm²", "明敷(A)", "二股穿管(A)", "三股以上穿管(A)"],
+            WIRE_AMPACITY,
+        ))
+        l = QLabel("铜芯塑料绝缘线(BV)，环境温度 25℃，空气敷设；穿管敷设应乘以校正系数。")
+        l.setObjectName("muted")
+        v.addWidget(l)
+        return w
+
+    def _mcb_tab(self):
+        w = QWidget(); v = QVBoxLayout(w)
+        v.addWidget(self._table(
+            ["额定电流(A)", "可带功率 220V(kW)", "适用负载"],
+            MCB_SELECTION,
+        ))
+        l = QLabel("空开额定电流 ≈ 导线安全载流量的 80%；感性负载按 1.25 倍选。")
+        l.setObjectName("muted")
+        v.addWidget(l)
+        return w
+
+    def _ground_tab(self):
+        w = QWidget(); v = QVBoxLayout(w)
+        rows = [(k, val) for k, val in GROUNDING_REQ.items()]
+        v.addWidget(self._table(["接地类型", "电阻要求"], rows))
         return w

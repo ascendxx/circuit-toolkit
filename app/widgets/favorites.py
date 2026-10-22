@@ -13,6 +13,13 @@ def load_favs():
         return []
 
 
+def save_favs(items):
+    try:
+        FAV_FILE.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+
 class FavoritesPage(QWidget):
     def __init__(self):
         super().__init__()
