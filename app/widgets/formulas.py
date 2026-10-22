@@ -199,15 +199,31 @@ class FormulasPage(QWidget):
             return
         env = dict(_SAFE)
         try:
-            for i, (name, _, _) in enumerate(f["inputs"]):
+            nums = []
+            for i, (name, _, default) in enumerate(f["inputs"]):
                 txt = self._input_edits[i].text().strip()
                 if not txt:
-                    raise ValueError(f"参数 {name} 为空")
+                    continue
                 try:
-                    env[name] = float(txt)
+                    nums.append(float(txt))
                 except ValueError:
                     raise ValueError(f"参数 {name} 不是有效数字：{txt}")
-            val = eval(f["compute"], {"__builtins__": {}}, env)
+            if not nums:
+                raise ValueError("至少填一个参数")
+
+            combine = f.get("combine")
+            if combine == "series":
+                val = sum(nums)
+            elif combine == "parallel":
+                val = 1.0 / sum(1.0 / x for x in nums)
+            else:
+                env = dict(_SAFE)
+                for i, (name, _, _) in enumerate(f["inputs"]):
+                    txt = self._input_edits[i].text().strip()
+                    if txt:
+                        env[name] = float(txt)
+                val = eval(f["compute"], {"__builtins__": {}}, env)
+
             if math.isnan(val) or math.isinf(val):
                 raise ValueError("结果异常（除零或超出范围）")
             self.calc_result.setText(f"{f['output']} = {val:.6g}")
