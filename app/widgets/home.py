@@ -1,4 +1,4 @@
-"""主页：欢迎 + 统计卡片 + 快捷入口。"""
+"""主页：欢迎 + 统计 + 常用计算快捷入口。"""
 from PyQt6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QGridLayout, QFrame,
     QSizePolicy,
@@ -19,13 +19,25 @@ def _count_pins():
     return n
 
 
+COMMON = [
+    ("欧姆定律", "U=IR"),
+    ("串并联电阻", "R1+R2+…"),
+    ("感抗/容抗", "X=2πfL / 1/(2πfC)"),
+    ("三相功率", "P=√3·U·I·cosφ"),
+    ("功率因数补偿", "Qc=P(tanφ1-tanφ2)"),
+    ("短路电流", "Ik=c·Un/(√3·Z)"),
+    ("接地电阻", "R=ρ/(2πL)·ln(4L/d)"),
+    ("电机转速", "n0=60f/p"),
+]
+
+
 class HomePage(QWidget):
     def __init__(self, navigator=None):
         super().__init__()
         self.nav = navigator
         lay = QVBoxLayout(self)
         lay.setContentsMargins(32, 28, 32, 24)
-        lay.setSpacing(18)
+        lay.setSpacing(20)
 
         title = QLabel("电路计算工具箱")
         title.setObjectName("h1")
@@ -34,7 +46,6 @@ class HomePage(QWidget):
         lay.addWidget(title)
         lay.addWidget(sub)
 
-        # 统计卡片
         stats = QGridLayout()
         stats.setSpacing(12)
         cards = [
@@ -47,20 +58,27 @@ class HomePage(QWidget):
             stats.addWidget(self._stat_card(num, label), 0, i)
         lay.addLayout(stats)
 
-        # 快捷入口
-        lay.addWidget(self._section_label("快速入口"))
-        grid = QGridLayout()
-        grid.setSpacing(12)
+        lay.addWidget(self._section_label("常用计算（考试高频）"))
+        common = QGridLayout()
+        common.setSpacing(10)
+        for i, (name, expr) in enumerate(COMMON):
+            common.addWidget(self._common_card(name, expr), i // 2, i % 2)
+        lay.addLayout(common)
+
+        lay.addWidget(self._section_label("功能模块"))
+        nav = QGridLayout()
+        nav.setSpacing(10)
         items = [
             ("🔄 转换", "温度 / 电压波形 / 欧姆定律 / 功率因数 / 色环电阻", "convert"),
-            ("📚 资源", "色环电阻 / 电线颜色 / AWG / 温度传感器", "resources"),
+            ("📚 资源", "色环电阻 / 载流量 / 空开选型 / 接地电阻", "resources"),
             ("🔌 引脚定义", "USB / HDMI / RJ45 / RS232 / VGA / 树莓派", "pinouts"),
-            ("📐 公式集", "电路基础 / 电机 / 变压器 / 功率因数 / 短路", "formulas"),
+            ("📐 公式集", f"{_count_formulas()} 条公式，支持搜索", "formulas"),
             ("⭐ 收藏", "常用公式与计算入口", "favorites"),
         ]
         for i, (name, desc, key) in enumerate(items):
-            grid.addWidget(self._entry_card(name, desc, key), i // 3, i % 3)
-        lay.addLayout(grid)
+            nav.addWidget(self._nav_card(name, desc, key), i // 3, i % 3)
+        lay.addLayout(nav)
+
         lay.addStretch()
 
     def _section_label(self, text):
@@ -71,27 +89,45 @@ class HomePage(QWidget):
     def _stat_card(self, num, label):
         f = QFrame()
         f.setObjectName("card")
-        f.setMinimumHeight(80)
+        f.setMinimumHeight(90)
         v = QVBoxLayout(f)
-        v.setContentsMargins(16, 14, 16, 14)
+        v.setContentsMargins(18, 16, 18, 16)
+        v.setSpacing(6)
         n = QLabel(num)
-        n.setStyleSheet("font-size:26px;font-weight:700;color:#0071e3;")
+        n.setObjectName("statNum")
         l = QLabel(label)
         l.setObjectName("muted")
         v.addWidget(n)
         v.addWidget(l)
         return f
 
-    def _entry_card(self, name, desc, key):
+    def _common_card(self, name, expr):
+        f = QFrame()
+        f.setObjectName("card")
+        f.setMinimumHeight(64)
+        f.setCursor(Qt.CursorShape.PointingHandCursor)
+        v = QVBoxLayout(f)
+        v.setContentsMargins(16, 12, 16, 12)
+        v.setSpacing(4)
+        n = QLabel(name)
+        n.setStyleSheet("font-size:14px;font-weight:600;")
+        e = QLabel(expr)
+        e.setObjectName("muted")
+        v.addWidget(n)
+        v.addWidget(e)
+        f.mousePressEvent = lambda e: self._jump("formulas")
+        return f
+
+    def _nav_card(self, name, desc, key):
         f = QFrame()
         f.setObjectName("card")
         f.setMinimumHeight(72)
-        f.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         f.setCursor(Qt.CursorShape.PointingHandCursor)
         v = QVBoxLayout(f)
         v.setContentsMargins(16, 14, 16, 14)
+        v.setSpacing(4)
         n = QLabel(name)
-        n.setStyleSheet("font-size:15px;font-weight:600;")
+        n.setStyleSheet("font-size:14px;font-weight:600;")
         d = QLabel(desc)
         d.setObjectName("muted")
         d.setWordWrap(True)

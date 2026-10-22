@@ -72,16 +72,16 @@ class FormulasPage(QWidget):
         self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.table.verticalHeader().setVisible(False)
         self.table.setAlternatingRowColors(True)
-        self.table.verticalHeader().setDefaultSectionSize(34)
+        self.table.verticalHeader().setDefaultSectionSize(38)
         self.table.itemSelectionChanged.connect(self._on_select)
         self.table.itemDoubleClicked.connect(self._compute)
-        right.addWidget(self.table, 3)
+        right.addWidget(self.table, 5)
 
         calc = QFrame()
         calc.setObjectName("card")
         cv = QVBoxLayout(calc)
         cv.setContentsMargins(16, 14, 16, 14)
-        cv.setSpacing(10)
+        cv.setSpacing(8)
         calc_title = QLabel("计算（双击表格行或按回车）")
         calc_title.setStyleSheet("font-weight:600;color:#0071e3;")
         cv.addWidget(calc_title)
@@ -102,7 +102,7 @@ class FormulasPage(QWidget):
         cv.addLayout(btn_row)
         cv.addStretch()
 
-        right.addWidget(calc, 2)
+        right.addWidget(calc, 1)
         root.addLayout(right, 1)
 
         self._current = None
